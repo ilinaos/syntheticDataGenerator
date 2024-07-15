@@ -35,5 +35,6 @@ schema = StructType([
 df = spark.createDataFrame(data, schema=schema)
 
 # df.show()
+df.write.csv('mySyntheticData.csv', header=True)
 
 spark.stop()
