@@ -3,25 +3,30 @@ from pyspark.sql.types import StructType, StructField, IntegerType, StringType, 
 from random import randint, choice, uniform
 from config import *
 
+def get_date(today: datetime):
+    month = randint(1, today.month)
+    max_day = 31
+    if month == 2:
+        max_day = 28
+    elif month in [4, 6, 9, 11]:
+        max_day = 30
+    day = randint(1, today.day) if month == today.month else randint(1, max_day)
+    month = str(month) if month>10 else '0'+str(month)
+    day = str(day) if day>10 else '0'+str(day)
+    date = f'{today.year}-{month}-{day}'
+    return date
+
 spark = (SparkSession.builder
 .appName("MySparkApp")
 .getOrCreate())
 
 data = []
 for step in range(count_records):
-    month = randint(1, today.month)
-    max_day=31
-    if month==2:
-        max_day = 28
-    elif month in [4,6,9,11]:
-        max_day = 30
-    day = randint(1, today.day) if month==today.month else randint(1,max_day)
-    date = f'{today.year}-{month}-{day}'
     userid = randint(1, count_users)
     product = choice(products)
     count = randint(min_count_products, max_count_products)
     price = uniform(min_price, max_price)
-    record = tuple([date, userid, product, count, price])
+    record = tuple([get_date(today=today), userid, product, count, price])
     data.append(record)
 
 schema = StructType([
@@ -35,6 +40,6 @@ schema = StructType([
 df = spark.createDataFrame(data, schema=schema)
 
 # df.show()
-df.write.csv('mySyntheticData.csv', header=True)
+df.coalesce(1).write.csv('mySyntheticData.csv', header=True)
 
 spark.stop()
